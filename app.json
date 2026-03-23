@@ -1,0 +1,60 @@
+{
+  "expo": {
+    "name": "eco-app",
+    "slug": "eco-app",
+    "version": "1.0.2",
+    "orientation": "portrait",
+    "icon": "./assets/images/bombom.png",
+    "scheme": "ecoapp",
+    "userInterfaceStyle": "automatic",
+    "splash": {
+      "image": "./assets/images/bombom.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#007AFF"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "statusBarStyle": "dark"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#ffffff",
+        "supportsTablet": true,
+        "foregroundImage": "./assets/images/bombom.png"
+      },
+      "edgeToEdgeEnabled": true,
+      "predictiveBackGestureEnabled": false,
+      "package": "com.tiredrice123.ecoapp",
+      "navigationBar": {
+        "visible": "immersive"
+      },
+      "statusBar": {
+        "backgroundColor": "#007AFF",
+        "translucent": false,
+        "barStyle": "dark-content"
+      },
+      "softwareKeyboardLayoutMode": "pan",
+      "usesCleartextTraffic": false
+    },
+    "web": {
+      "output": "static",
+      "favicon": "./assets/images/bombom.png"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-splash-screen",
+      [
+        "expo-system-ui",
+        {
+          "android": {
+            "hideNavigationBar": true
+          }
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true,
+      "reactCompiler": true
+    }
+  }
+}
