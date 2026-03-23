@@ -7,7 +7,7 @@ export default function CartScreen() {
     <ThemedView style={styles.container}>
       <ScrollView style={styles.content}>
         <ThemedView style={styles.header}>
-          <ThemedText type="title">Shopping Cart</ThemedText>
+          <ThemedText type="title" style={styles.headerTitle}>Shopping Cart</ThemedText>
         </ThemedView>
         
         <ThemedView style={styles.emptyCart}>
@@ -31,6 +31,11 @@ const styles = StyleSheet.create({
     marginBottom: 24,
     paddingTop: 20,
   },
+  headerTitle: {
+    fontSize: 28,
+    fontWeight: '700',
+    color: '#007AFF',
+  },
   emptyCart: {
     flex: 1,
     justifyContent: 'center',
@@ -41,9 +46,10 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '600',
     marginBottom: 8,
+    color: '#1C1C1E',
   },
   emptySubtext: {
     fontSize: 14,
-    opacity: 0.6,
+    color: '#8E8E93',
   },
 });
