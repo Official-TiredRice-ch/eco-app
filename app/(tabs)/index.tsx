@@ -2,6 +2,7 @@ import { ScrollView, StyleSheet, View, TouchableOpacity } from 'react-native';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
+import { BackendStatus } from '@/components/backend-status';
 
 export default function HomeScreen() {
   const featuredProducts = [
@@ -20,6 +21,9 @@ export default function HomeScreen() {
   return (
     <ThemedView style={styles.container}>
       <ScrollView showsVerticalScrollIndicator={false} style={styles.scrollView}>
+        {/* Backend Status */}
+        <BackendStatus />
+
         {/* Header with Search */}
         <ThemedView style={styles.header}>
           <ThemedText type="title" style={styles.headerTitle}>

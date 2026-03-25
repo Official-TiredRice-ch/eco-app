@@ -8,6 +8,7 @@ import * as SystemUI from 'expo-system-ui';
 import 'react-native-reanimated';
 
 import { useColorScheme } from '@/hooks/use-color-scheme';
+import { ApiProvider } from '@/context/api-context';
 
 export const unstable_settings = {
   anchor: '(tabs)',
@@ -25,13 +26,15 @@ export default function RootLayout() {
 
   return (
     <SafeAreaProvider>
-      <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-        <Stack>
-          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-          <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
-        </Stack>
-        <StatusBar style="dark" backgroundColor="#007AFF" />
-      </ThemeProvider>
+      <ApiProvider>
+        <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+          <Stack>
+            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+            <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
+          </Stack>
+          <StatusBar style="dark" backgroundColor="#007AFF" />
+        </ThemeProvider>
+      </ApiProvider>
     </SafeAreaProvider>
   );
 }
