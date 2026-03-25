@@ -1,10 +1,14 @@
 import { ScrollView, StyleSheet, View, TouchableOpacity } from 'react-native';
+import { useRouter } from 'expo-router';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { BackendStatus } from '@/components/backend-status';
+import { SearchBar } from '@/components/search-bar';
 
 export default function HomeScreen() {
+  const router = useRouter();
+
   const featuredProducts = [
     { id: 1, name: 'Electronics', icon: 'bolt.fill', color: '#FF6B6B' },
     { id: 2, name: 'Fashion', icon: 'bag.fill', color: '#4ECDC4' },
@@ -18,6 +22,13 @@ export default function HomeScreen() {
     { id: 3, title: 'New Arrivals', discount: 'Check Now', icon: 'star.fill' },
   ];
 
+  const handleSearch = (query: string) => {
+    router.push({
+      pathname: '/search-results',
+      params: { query }
+    });
+  };
+
   return (
     <ThemedView style={styles.container}>
       <ScrollView showsVerticalScrollIndicator={false} style={styles.scrollView}>
@@ -29,10 +40,7 @@ export default function HomeScreen() {
           <ThemedText type="title" style={styles.headerTitle}>
             EcoApp
           </ThemedText>
-          <TouchableOpacity style={styles.searchBar}>
-            <IconSymbol size={20} name="magnifyingglass" color="#8E8E93" />
-            <ThemedText style={styles.searchPlaceholder}>Search products...</ThemedText>
-          </TouchableOpacity>
+          <SearchBar onSearch={handleSearch} />
         </ThemedView>
 
         {/* Promotions Banner */}
@@ -130,20 +138,6 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     marginBottom: 12,
     color: '#007AFF',
-  },
-  searchBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#F8F9FA',
-    borderRadius: 12,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    gap: 8,
-  },
-  searchPlaceholder: {
-    flex: 1,
-    color: '#8E8E93',
-    fontSize: 14,
   },
   promotionsContainer: {
     paddingHorizontal: 16,
