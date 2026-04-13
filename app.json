@@ -2,7 +2,7 @@
   "expo": {
     "name": "eco-app",
     "slug": "eco-app",
-    "version": "1.0.2",
+    "version": "1.0.6",
     "orientation": "portrait",
     "icon": "./assets/images/bombom.png",
     "scheme": "ecoapp",
@@ -28,13 +28,21 @@
       "navigationBar": {
         "visible": "immersive"
       },
+       "permissions": [
+        "android.permission.INTERNET",
+        "android.permission.ACCESS_NETWORK_STATE",
+        "android.permission.ACCESS_WIFI_STATE",
+        "android.permission.MODIFY_AUDIO_SETTINGS",
+        "android.permission.RECORD_AUDIO"
+      ],
       "statusBar": {
         "backgroundColor": "#007AFF",
         "translucent": false,
         "barStyle": "dark-content"
       },
       "softwareKeyboardLayoutMode": "pan",
-      "usesCleartextTraffic": false
+      "usesCleartextTraffic": true,
+      "networkSecurityConfig": "./android-network-security-config.xml"
     },
     "web": {
       "output": "static",
@@ -55,6 +63,19 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
-    }
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "dd80ee7a-b596-48dc-94cb-a4f68645a45b"
+      }
+    },
+    "updates": {
+      "url": "https://u.expo.dev/dd80ee7a-b596-48dc-94cb-a4f68645a45b"
+    },
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "owner": "tiredrice123"
   }
 }

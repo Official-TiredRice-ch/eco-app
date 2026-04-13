@@ -28,8 +28,9 @@ export function BackendStatus() {
   return (
     <TouchableOpacity style={[styles.container, styles.error]} onPress={reconnect}>
       <IconSymbol size={16} name="exclamationmark.circle.fill" color="#FF3B30" />
-      <ThemedText style={styles.text}>Disconnected</ThemedText>
-      {error && <ThemedText style={styles.errorMsg}>{error.message}</ThemedText>}
+      <ThemedText style={styles.text}>Tap to Reconnect</ThemedText>
+      {error && <ThemedText style={styles.errorMsg} numberOfLines={2}>{error.message}</ThemedText>}
+      <ThemedText style={styles.helpText}>Backend: 192.168.1.30:24365</ThemedText>
     </TouchableOpacity>
   );
 }
@@ -52,6 +53,8 @@ const styles = StyleSheet.create({
   },
   error: {
     backgroundColor: '#FFEBEE',
+    flexDirection: 'column',
+    alignItems: 'flex-start',
   },
   text: {
     fontSize: 12,
@@ -65,5 +68,11 @@ const styles = StyleSheet.create({
   errorMsg: {
     fontSize: 10,
     color: '#FF3B30',
+    marginTop: 4,
+  },
+  helpText: {
+    fontSize: 10,
+    color: '#666',
+    marginTop: 4,
   },
 });

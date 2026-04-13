@@ -21,7 +21,7 @@ export function ApiProvider({ children }: { children: React.ReactNode }) {
     try {
       setIsLoading(true);
       setError(null);
-      const url = await apiService.discoverBackend();
+      const url = await apiService.rediscover();
       setBaseUrl(url);
       setIsConnected(true);
       console.log('✅ API Context: Connected to', url);
@@ -29,6 +29,7 @@ export function ApiProvider({ children }: { children: React.ReactNode }) {
       const error = err instanceof Error ? err : new Error('Connection failed');
       setError(error);
       setIsConnected(false);
+      setBaseUrl(apiService.getCurrentUrl()); // Show the URL we're trying to use
       console.error('❌ API Context: Connection failed', error);
     } finally {
       setIsLoading(false);
