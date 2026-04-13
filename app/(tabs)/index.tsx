@@ -1,19 +1,37 @@
-import { ScrollView, StyleSheet, View, TouchableOpacity } from 'react-native';
+import { ScrollView, StyleSheet, View, TouchableOpacity, Image, Text, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
+import { useState, useEffect } from 'react';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { BackendStatus } from '@/components/backend-status';
 import { SearchBar } from '@/components/search-bar';
+import { apiService } from '@/services/api';
+
+interface Product {
+  id: number;
+  name: string;
+  price: number;
+  image_url?: string;
+  stock: number;
+  category_name?: string;
+}
 
 export default function HomeScreen() {
   const router = useRouter();
+  const [bestsellers, setBestsellers] = useState<Product[]>([]);
+  const [allProducts, setAllProducts] = useState<Product[]>([]);
+  const [featuredProducts, setFeaturedProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [currentCategoryIndex, setCurrentCategoryIndex] = useState(0);
 
-  const featuredProducts = [
-    { id: 1, name: 'Electronics', icon: 'bolt.fill', color: '#FF6B6B' },
-    { id: 2, name: 'Fashion', icon: 'bag.fill', color: '#4ECDC4' },
-    { id: 3, name: 'Home', icon: 'house.fill', color: '#45B7D1' },
-    { id: 4, name: 'Sports', icon: 'dumbbell.fill', color: '#FFA07A' },
+  const categories = [
+    { name: 'Electronics', search: 'laptop' },
+    { name: 'Home & Garden', search: 'sofa' },
+    { name: 'Fashion', search: 'jacket' },
+    { name: 'Sports & Outdoors', search: 'yoga' },
+    { name: 'Books', search: 'book' },
+    { name: 'Beauty & Health', search: 'skincare' }
   ];
 
   const promotions = [
@@ -22,11 +40,76 @@ export default function HomeScreen() {
     { id: 3, title: 'New Arrivals', discount: 'Check Now', icon: 'star.fill' },
   ];
 
+  useEffect(() => {
+    loadProducts();
+  }, []);
+
+  useEffect(() => {
+    // Rotate categories every 3 seconds
+    const interval = setInterval(() => {
+      setCurrentCategoryIndex((prev) => (prev + 1) % categories.length);
+    }, 3000);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  useEffect(() => {
+    // Update featured products when category changes
+    if (allProducts.length > 0) {
+      updateFeaturedProducts();
+    }
+  }, [currentCategoryIndex, allProducts]);
+
+  const loadProducts = async () => {
+    try {
+      console.log('🔄 Loading products...');
+      setLoading(true);
+      const productsRes = await apiService.get('/api/products?limit=50&in_stock=true');
+      
+
+      if (productsRes && (productsRes as any).products) {
+        const products = (productsRes as any).products;
+        console.log('✅ Found products:', products.length);
+        setAllProducts(products);
+        setBestsellers(products.slice(0, 6));
+        updateFeaturedProducts(products, 0);
+      } else {
+        console.log('❌ No products in response');
+      }
+    } catch (error) {
+      console.error('❌ Error loading products:', error);
+    } finally {
+      setLoading(false);
+      console.log('✅ Loading complete');
+    }
+  };
+
+  const updateFeaturedProducts = (products?: Product[], categoryIndex?: number) => {
+    const prods = products || allProducts;
+    const catIndex = categoryIndex !== undefined ? categoryIndex : currentCategoryIndex;
+    const currentCategory = categories[catIndex];
+    
+    // Filter products by search term
+    const filtered = prods.filter(p => 
+      p.name.toLowerCase().includes(currentCategory.search.toLowerCase()) ||
+      (p.category_name && p.category_name.toLowerCase().includes(currentCategory.name.toLowerCase()))
+    );
+    
+    // If we have filtered products, use them; otherwise use any 4 products
+    const productsToShow = filtered.length >= 4 ? filtered.slice(0, 4) : prods.slice(catIndex * 4, catIndex * 4 + 4);
+    setFeaturedProducts(productsToShow);
+    console.log(`🎯 Updated featured for ${currentCategory.name}:`, productsToShow.length, 'products');
+  };
+
   const handleSearch = (query: string) => {
     router.push({
       pathname: '/search-results',
       params: { query }
     });
+  };
+
+  const formatPrice = (price: number) => {
+    return `₱${price.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
   };
 
   return (
@@ -57,23 +140,52 @@ export default function HomeScreen() {
           ))}
         </ScrollView>
 
-        {/* Featured Categories */}
+        {/* Featured Category - Rotating */}
         <ThemedView style={styles.sectionContainer}>
-          <ThemedText type="subtitle" style={styles.sectionTitle}>
-            Featured Categories
-          </ThemedText>
-          <View style={styles.categoriesGrid}>
-            {featuredProducts.map((product) => (
-              <TouchableOpacity
-                key={product.id}
-                style={[styles.categoryCard, { borderLeftColor: product.color }]}>
-                <View style={[styles.iconContainer, { backgroundColor: product.color }]}>
-                  <IconSymbol size={32} name={product.icon as any} color="#FFFFFF" />
-                </View>
-                <ThemedText style={styles.categoryName}>{product.name}</ThemedText>
-              </TouchableOpacity>
-            ))}
-          </View>
+          <ThemedView style={styles.categoryHeaderContainer}>
+            <ThemedText type="subtitle" style={styles.sectionTitle}>
+              {categories[currentCategoryIndex].name}
+            </ThemedText>
+            <View style={styles.categoryIndicator}>
+              {categories.map((_, index) => (
+                <View
+                  key={index}
+                  style={[
+                    styles.indicatorDot,
+                    index === currentCategoryIndex && styles.indicatorDotActive
+                  ]}
+                />
+              ))}
+            </View>
+          </ThemedView>
+          {loading ? (
+            <ActivityIndicator size="large" color="#007AFF" style={{ marginVertical: 20 }} />
+          ) : featuredProducts.length === 0 ? (
+            <Text style={{ textAlign: 'center', color: '#8E8E93', padding: 20 }}>
+              No products available
+            </Text>
+          ) : (
+            <View style={styles.categoriesGrid}>
+              {featuredProducts.slice(0, 4).map((product, index) => (
+                <TouchableOpacity
+                  key={`${product.id}-${currentCategoryIndex}-${index}`}
+                  style={styles.featuredCard}>
+                  {product.image_url ? (
+                    <Image source={{ uri: product.image_url }} style={styles.featuredImage} />
+                  ) : (
+                    <View style={styles.featuredImagePlaceholder}>
+                      <IconSymbol size={32} name="bolt.fill" color="#007AFF" />
+                    </View>
+                  )}
+                  <Text style={styles.featuredName} numberOfLines={2}>{product.name}</Text>
+                  <Text style={styles.featuredPrice}>{formatPrice(product.price)}</Text>
+                  {product.stock > 0 && (
+                    <Text style={styles.featuredStock}>In Stock: {product.stock}</Text>
+                  )}
+                </TouchableOpacity>
+              ))}
+            </View>
+          )}
         </ThemedView>
 
         {/* Best Sellers */}
@@ -82,25 +194,38 @@ export default function HomeScreen() {
             <ThemedText type="subtitle" style={styles.sectionTitle}>
               Best Sellers
             </ThemedText>
-            <TouchableOpacity>
+            <TouchableOpacity onPress={() => router.push('/all-products')}>
               <ThemedText style={styles.viewAll}>View All</ThemedText>
             </TouchableOpacity>
           </ThemedView>
-          <View style={styles.productsList}>
-            {[1, 2, 3].map((item) => (
-              <TouchableOpacity key={item} style={styles.productCard}>
-                <View style={styles.productImage}>
-                  <IconSymbol size={40} name="star.fill" color="#FFD700" />
-                </View>
-                <ThemedText style={styles.productName}>Product {item}</ThemedText>
-                <ThemedText style={styles.productPrice}>$99.99</ThemedText>
-                <View style={styles.ratingContainer}>
-                  <IconSymbol size={14} name="star.fill" color="#FFD700" />
-                  <ThemedText style={styles.rating}>4.5 (120)</ThemedText>
-                </View>
-              </TouchableOpacity>
-            ))}
-          </View>
+          {loading ? (
+            <ActivityIndicator size="large" color="#007AFF" style={{ marginVertical: 20 }} />
+          ) : bestsellers.length === 0 ? (
+            <Text style={{ textAlign: 'center', color: '#8E8E93', padding: 20 }}>
+              No products available
+            </Text>
+          ) : (
+            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+              <View style={styles.productsList}>
+                {bestsellers.map((product) => (
+                  <TouchableOpacity key={product.id} style={styles.productCard}>
+                    {product.image_url ? (
+                      <Image source={{ uri: product.image_url }} style={styles.productImage} />
+                    ) : (
+                      <View style={styles.productImagePlaceholder}>
+                        <IconSymbol size={40} name="star.fill" color="#FFD700" />
+                      </View>
+                    )}
+                    <Text style={styles.productName} numberOfLines={2}>{product.name}</Text>
+                    <Text style={styles.productPrice}>{formatPrice(product.price)}</Text>
+                    {product.category_name && (
+                      <Text style={styles.productCategory}>{product.category_name}</Text>
+                    )}
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </ScrollView>
+          )}
         </ThemedView>
 
         {/* Special Offers */}
@@ -180,6 +305,24 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '600',
   },
+  categoryHeaderContainer: {
+    marginBottom: 12,
+  },
+  categoryIndicator: {
+    flexDirection: 'row',
+    gap: 6,
+    marginTop: 8,
+  },
+  indicatorDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: '#D1D1D6',
+  },
+  indicatorDotActive: {
+    backgroundColor: '#007AFF',
+    width: 20,
+  },
   viewAll: {
     color: '#007AFF',
     fontSize: 14,
@@ -190,43 +333,77 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     justifyContent: 'space-between',
   },
-  categoryCard: {
+  featuredCard: {
     width: '48%',
-    backgroundColor: '#F8F9FA',
+    backgroundColor: '#FFFFFF',
     borderRadius: 12,
-    padding: 16,
+    padding: 12,
     marginBottom: 12,
-    alignItems: 'center',
-    borderLeftWidth: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
-  iconContainer: {
-    width: 60,
-    height: 60,
-    borderRadius: 12,
+  featuredImage: {
+    width: '100%',
+    height: 100,
+    borderRadius: 8,
+    marginBottom: 8,
+    resizeMode: 'cover',
+  },
+  featuredImagePlaceholder: {
+    width: '100%',
+    height: 100,
+    backgroundColor: '#E8E8E8',
+    borderRadius: 8,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 8,
   },
-  categoryName: {
-    fontSize: 14,
+  featuredName: {
+    fontSize: 13,
     fontWeight: '600',
-    textAlign: 'center',
+    marginBottom: 4,
     color: '#1C1C1E',
+    minHeight: 36,
+  },
+  featuredPrice: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#007AFF',
+    marginBottom: 4,
+  },
+  featuredStock: {
+    fontSize: 11,
+    color: '#34C759',
+    fontWeight: '500',
   },
   productsList: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    gap: 12,
   },
   productCard: {
-    width: '31%',
-    backgroundColor: '#F8F9FA',
+    width: 140,
+    backgroundColor: '#FFFFFF',
     borderRadius: 12,
     padding: 12,
-    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
   productImage: {
     width: '100%',
-    height: 80,
+    height: 100,
+    borderRadius: 8,
+    marginBottom: 8,
+    resizeMode: 'cover',
+  },
+  productImagePlaceholder: {
+    width: '100%',
+    height: 100,
     backgroundColor: '#E8E8E8',
     borderRadius: 8,
     justifyContent: 'center',
@@ -234,25 +411,22 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   productName: {
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: '600',
     marginBottom: 4,
     color: '#1C1C1E',
+    minHeight: 36,
   },
   productPrice: {
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: '700',
     color: '#007AFF',
-    marginBottom: 6,
+    marginBottom: 4,
   },
-  ratingContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  rating: {
+  productCategory: {
     fontSize: 11,
     color: '#8E8E93',
+    fontStyle: 'italic',
   },
   specialOfferContainer: {
     marginHorizontal: 16,

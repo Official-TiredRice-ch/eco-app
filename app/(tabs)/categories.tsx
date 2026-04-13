@@ -1,10 +1,12 @@
 import { StyleSheet, ScrollView, TouchableOpacity, View } from 'react-native';
 import { useState } from 'react';
+import { useRouter } from 'expo-router';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 
 export default function CategoriesScreen() {
+  const router = useRouter();
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
   const categories = [
@@ -17,6 +19,14 @@ export default function CategoriesScreen() {
     { name: 'Toys & Games', color: '#AA96DA', icon: 'gamecontroller.fill', products: 234 },
     { name: 'Automotive', color: '#FCBAD3', icon: 'car.fill', products: 167 },
   ];
+
+  const handleCategoryPress = (categoryName: string) => {
+    // Navigate to search-results with category name as query
+    router.push({
+      pathname: '/search-results',
+      params: { query: categoryName }
+    });
+  };
 
   const categoryProducts = {
     'Electronics': [
@@ -94,7 +104,7 @@ export default function CategoriesScreen() {
             <TouchableOpacity 
               key={index} 
               style={[styles.categoryCard, { backgroundColor: category.color }]}
-              onPress={() => setSelectedCategory(category.name)}>
+              onPress={() => handleCategoryPress(category.name)}>
               <IconSymbol size={32} name={category.icon as any} color="#FFFFFF" />
               <ThemedText style={styles.categoryText}>{category.name}</ThemedText>
               <ThemedText style={styles.categoryProducts}>{category.products} items</ThemedText>
