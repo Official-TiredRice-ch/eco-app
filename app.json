@@ -2,7 +2,7 @@
   "expo": {
     "name": "eco-app",
     "slug": "eco-app",
-    "version": "1.0.6",
+    "version": "1.0.9",
     "orientation": "portrait",
     "icon": "./assets/images/bombom.png",
     "scheme": "ecoapp",
@@ -26,7 +26,8 @@
       "predictiveBackGestureEnabled": false,
       "package": "com.tiredrice123.ecoapp",
       "navigationBar": {
-        "visible": "immersive"
+        "visible": "false",
+        "backgroundColor": "#00000000"
       },
        "permissions": [
         "android.permission.INTERNET",
@@ -58,7 +59,9 @@
             "hideNavigationBar": true
           }
         }
-      ]
+      ],
+      "./plugins/withAndroidNetworkSecurity.js",
+      "./plugins/withHideNavigationBar.js"
     ],
     "experiments": {
       "typedRoutes": true,

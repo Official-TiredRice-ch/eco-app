@@ -6,22 +6,17 @@ import { useApiContext } from '@/context/api-context';
 export function BackendStatus() {
   const { baseUrl, isConnected, isLoading, error, reconnect } = useApiContext();
 
+  // Only show when loading or disconnected
+  if (isConnected) {
+    return null; // Hide when connected
+  }
+
   if (isLoading) {
     return (
       <View style={[styles.container, styles.loading]}>
         <IconSymbol size={16} name="bolt.fill" color="#FFA500" />
         <ThemedText style={styles.text}>Connecting...</ThemedText>
       </View>
-    );
-  }
-
-  if (isConnected) {
-    return (
-      <TouchableOpacity style={[styles.container, styles.connected]} onPress={reconnect}>
-        <IconSymbol size={16} name="checkmark.circle.fill" color="#34C759" />
-        <ThemedText style={styles.text}>Connected</ThemedText>
-        <ThemedText style={styles.url}>{baseUrl}</ThemedText>
-      </TouchableOpacity>
     );
   }
 

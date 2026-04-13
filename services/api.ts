@@ -38,47 +38,18 @@ class APIService {
       const cached = await this.getCachedBackendUrl();
       if (cached) {
         console.log('📦 Using cached backend URL:', cached);
-        // Verify cached URL still works
-        const isHealthy = await this.checkBackendHealth(cached, 2000);
-        if (isHealthy) {
-          this.baseUrl = cached;
-          return cached;
-        } else {
-          console.log('⚠️ Cached URL not responding, clearing cache');
-          await this.clearCache();
-        }
+        // Don't verify cached URL - just use it and let requests fail/retry if needed
+        this.baseUrl = cached;
+        return cached;
       }
 
-      // Try each URL in order
-      for (let i = 0; i < BACKEND_URLS.length; i++) {
-        const url = BACKEND_URLS[i];
-        console.log(`🔗 Trying backend ${i + 1}/${BACKEND_URLS.length}: ${url}`);
-        
-        const isHealthy = await this.checkBackendHealth(url, DISCOVERY_TIMEOUT);
-        if (isHealthy) {
-          console.log('✅ Backend found at:', url);
-          await this.cacheBackendUrl(url);
-          this.baseUrl = url;
-          return url;
-        } else {
-          console.log(`❌ No response from ${url}`);
-        }
-      }
-
-      // If no URL works, try network discovery as fallback
-      console.log('🌐 Trying network discovery as fallback...');
-      const discoveredUrl = await this.tryNetworkDiscovery();
-      if (discoveredUrl) {
-        await this.cacheBackendUrl(discoveredUrl);
-        this.baseUrl = discoveredUrl;
-        return discoveredUrl;
-      }
-
-      // Last resort: use the first URL anyway (maybe health endpoint doesn't work)
-      console.log('🔄 Using first URL as last resort...');
-      const fallbackUrl = BACKEND_URLS[0];
-      this.baseUrl = fallbackUrl;
-      return fallbackUrl;
+      // Try each URL in order - but don't wait for health check
+      // Just use the first URL and let the actual API requests determine if it works
+      console.log('🔗 Using primary backend URL:', BACKEND_URLS[0]);
+      const primaryUrl = BACKEND_URLS[0];
+      await this.cacheBackendUrl(primaryUrl);
+      this.baseUrl = primaryUrl;
+      return primaryUrl;
 
     } catch (error) {
       console.error('❌ Discovery error:', error);
@@ -157,6 +128,7 @@ class APIService {
       clearTimeout(timeoutId);
       return response.ok;
     } catch (error) {
+      // Don't log every failed health check - it's expected during discovery
       return false;
     }
   }
@@ -222,20 +194,18 @@ class APIService {
   ): Promise<T> {
     let lastError: Error | null = null;
 
-    // Try up to 3 times with different URLs if needed
-    for (let attempt = 1; attempt <= 3; attempt++) {
+    // Try up to 2 times
+    for (let attempt = 1; attempt <= 2; attempt++) {
       try {
         const baseUrl = await this.getBaseUrl();
         const url = `${baseUrl}${endpoint}`;
 
         console.log(`📡 API Request (attempt ${attempt}):`, url);
 
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
-
+        // Don't use AbortController - it's causing issues in built apps
+        // Just use a simple fetch with no timeout
         const response = await fetch(url, {
           ...options,
-          signal: controller.signal,
           headers: {
             'Content-Type': 'application/json',
             'Accept': 'application/json',
@@ -243,29 +213,35 @@ class APIService {
           },
         });
 
-        clearTimeout(timeoutId);
         console.log('📥 Response status:', response.status);
 
         if (!response.ok) {
+          const errorText = await response.text();
+          console.error('❌ Response error:', errorText);
           throw new Error(`API Error: ${response.status} ${response.statusText}`);
         }
 
         const data = await response.json();
-        console.log('✅ Request successful');
+        console.log('✅ Request successful, data received');
         return data;
       } catch (error) {
         console.error(`❌ API Request failed (attempt ${attempt}):`, error);
+        console.error('Error details:', {
+          name: (error as Error).name,
+          message: (error as Error).message,
+          stack: (error as Error).stack?.substring(0, 200)
+        });
         lastError = error as Error;
         
-        // If this attempt failed, clear the cached URL and try discovery again
-        if (attempt < 3) {
-          console.log('🔄 Retrying with fresh discovery...');
-          await this.clearCache();
-          this.baseUrl = null;
+        // If this attempt failed and we have more attempts, wait a bit before retrying
+        if (attempt < 2) {
+          console.log('⏳ Waiting 2 seconds before retry...');
+          await new Promise(resolve => setTimeout(resolve, 2000));
         }
       }
     }
 
+    console.error('❌ All attempts failed. Last error:', lastError);
     throw lastError || new Error('All API request attempts failed');
   }
 
